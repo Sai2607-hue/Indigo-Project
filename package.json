@@ -1,0 +1,12 @@
+{
+  "name": "indigo-dashboard-root",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "powershell -ExecutionPolicy Bypass -Command \"cd backend; .\\venv\\Scripts\\activate; uvicorn main:app --reload\"",
+    "dev:frontend": "cd frontend && npm run dev"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
