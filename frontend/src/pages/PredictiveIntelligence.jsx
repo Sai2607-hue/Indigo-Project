@@ -49,7 +49,7 @@ const PredictiveIntelligence = () => {
                   formatter={v => [`₹${(v/10000000).toFixed(2)} Cr`, 'Revenue']}
                 />
                 <Bar dataKey="revenue" radius={[6, 6, 0, 0]}
-                  fill="#3b82f6"
+                  fill="#001B94"
                   /* forecast bar will be lighter */
                 />
               </BarChart>
@@ -72,7 +72,7 @@ const PredictiveIntelligence = () => {
                 <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
                   formatter={v => [`${v}%`, 'Delay Rate']}
                 />
-                <Line type="monotone" dataKey="delayPct" stroke="#f59e0b" strokeWidth={3} dot={{ r: 6, fill: '#f59e0b' }} />
+                <Line type="monotone" dataKey="delayPct" stroke="#001B94" strokeWidth={3} dot={{ r: 6, fill: '#001B94' }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -95,7 +95,7 @@ const PredictiveIntelligence = () => {
                 <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
                   formatter={v => [`${v}%`, 'Compliance']}
                 />
-                <Line type="monotone" dataKey="compliance" stroke="#10b981" strokeWidth={3} dot={{ r: 6, fill: '#10b981' }} />
+                <Line type="monotone" dataKey="compliance" stroke="#00B259" strokeWidth={3} dot={{ r: 6, fill: '#00B259' }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -109,9 +109,9 @@ const PredictiveIntelligence = () => {
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '8px' }}>
             {revenueForecast.map((item, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'var(--surface-dark)', borderRadius: '8px', borderLeft: `3px solid ${item.month.includes('Forecast') ? '#8b5cf6' : '#3b82f6'}` }}>
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'var(--surface-dark)', borderRadius: '8px', borderLeft: `3px solid ${item.month.includes('Forecast') ? '#00B259' : '#001B94'}` }}>
                 <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>{item.month}</span>
-                <span style={{ fontSize: '18px', fontWeight: 700, color: item.month.includes('Forecast') ? '#8b5cf6' : 'var(--text-primary)' }}>
+                <span style={{ fontSize: '18px', fontWeight: 700, color: item.month.includes('Forecast') ? '#00B259' : 'var(--text-primary)' }}>
                   ₹{(item.revenue / 10000000).toFixed(2)} Cr
                 </span>
               </div>

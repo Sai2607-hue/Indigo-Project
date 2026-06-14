@@ -7,7 +7,7 @@ import FilterPanel from '../components/FilterPanel';
 import InfoIcon from '../components/InfoIcon';
 
 const API = 'http://127.0.0.1:8000';
-const COLORS = { onTime: '#10b981', delayed: '#f59e0b', cancelled: '#ef4444' };
+const COLORS = { onTime: '#00B259', delayed: '#001B94', cancelled: '#4d6eb2' };
 
 const ExecutiveCommandCenter = () => {
   const [data, setData] = useState(null);

@@ -8,7 +8,7 @@ import FilterPanel from '../components/FilterPanel';
 import InfoIcon from '../components/InfoIcon';
 
 const API = 'http://127.0.0.1:8000';
-const COLORS = ['#10b981', '#ef4444', '#3b82f6', '#f59e0b', '#8b5cf6', '#06b6d4'];
+const COLORS = ['#00B259', '#001B94', '#33c17a', '#3349aa', '#66d19c', '#6677bf'];
 
 const CrewOptimizationCenter = () => {
   const [data, setData] = useState(null);
@@ -93,7 +93,7 @@ const CrewOptimizationCenter = () => {
                 <XAxis dataKey="range" stroke="#64748b" fontSize={11} />
                 <YAxis stroke="#64748b" fontSize={12} />
                 <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
-                <Bar dataKey="count" fill="#3b82f6" radius={[6, 6, 0, 0]} name="Crew Members" />
+                <Bar dataKey="count" fill="#001B94" radius={[6, 6, 0, 0]} name="Crew Members" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -112,7 +112,7 @@ const CrewOptimizationCenter = () => {
                 <XAxis dataKey="range" stroke="#64748b" fontSize={11} />
                 <YAxis stroke="#64748b" fontSize={12} />
                 <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
-                <Bar dataKey="count" fill="#f59e0b" radius={[6, 6, 0, 0]} name="Crew Members" />
+                <Bar dataKey="count" fill="#00B259" radius={[6, 6, 0, 0]} name="Crew Members" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -133,7 +133,7 @@ const CrewOptimizationCenter = () => {
                   nameKey="status" label={({ status, percent }) => `${status} ${(percent * 100).toFixed(0)}%`}
                 >
                   {complianceBreakdown.map((entry, i) => (
-                    <Cell key={i} fill={entry.status === 'Compliant' ? '#10b981' : '#ef4444'} />
+                    <Cell key={i} fill={entry.status === 'Compliant' ? '#00B259' : '#001B94'} />
                   ))}
                 </Pie>
                 <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
@@ -155,7 +155,7 @@ const CrewOptimizationCenter = () => {
                 <XAxis type="number" stroke="#64748b" fontSize={12} />
                 <YAxis dataKey="base_station" type="category" stroke="#64748b" fontSize={11} width={50} />
                 <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
-                <Bar dataKey="crew_count" fill="#06b6d4" radius={[0, 4, 4, 0]} name="Crew Count" />
+                <Bar dataKey="crew_count" fill="#001B94" radius={[0, 4, 4, 0]} name="Crew Count" />
               </BarChart>
             </ResponsiveContainer>
           </div>

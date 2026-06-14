@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
-  PieChart, Pie, Cell,
 } from 'recharts';
 import FilterPanel from '../components/FilterPanel';
 import InfoIcon from '../components/InfoIcon';
@@ -15,6 +14,48 @@ const FlightOperationsIntelligence = () => {
   const [filterOptions, setFilterOptions] = useState({});
   const [filters, setFilters] = useState({ month: 'All', origin: 'All', destination: 'All', status: 'All' });
   const [loading, setLoading] = useState(true);
+  const [sortConfig, setSortConfig] = useState({ key: 'avg_delay', direction: 'asc' });
+
+  const sortedRoutePerformance = React.useMemo(() => {
+    if (!data || !data.routePerformance) return [];
+    let sortableItems = [...data.routePerformance];
+    if (sortConfig.key !== null) {
+      sortableItems.sort((a, b) => {
+        let aVal = a[sortConfig.key];
+        let bVal = b[sortConfig.key];
+        
+        if (sortConfig.key === 'risk_level') {
+          const riskWeight = { 'High': 3, 'Medium': 2, 'Low': 1 };
+          const aRisk = a.avg_delay > 30 ? 'High' : a.avg_delay > 15 ? 'Medium' : 'Low';
+          const bRisk = b.avg_delay > 30 ? 'High' : b.avg_delay > 15 ? 'Medium' : 'Low';
+          aVal = riskWeight[aRisk];
+          bVal = riskWeight[bRisk];
+        }
+
+        if (aVal < bVal) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (aVal > bVal) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [data, sortConfig]);
+
+  const requestSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const getSortIndicator = (key) => {
+    if (sortConfig.key !== key) return null;
+    return sortConfig.direction === 'asc' ? ' ▲' : ' ▼';
+  };
 
   useEffect(() => {
     axios.get(`${API}/api/filters`).then(r => setFilterOptions(r.data)).catch(() => {});
@@ -36,7 +77,7 @@ const FlightOperationsIntelligence = () => {
   );
   if (!data) return <div className="dashboard-container"><p>Failed to load data.</p></div>;
 
-  const { kpis, delayByRoute, cancelByRoute, topDelayAirports, statusDistribution, routePerformance } = data;
+  const { kpis, riskSummary = {}, delayByRoute, cancelByRoute, topDelayAirports, routePerformance } = data;
 
   return (
     <div className="dashboard-container">
@@ -85,21 +126,55 @@ const FlightOperationsIntelligence = () => {
         </div>
       </div>
 
+      {/* Operational Risk Panel */}
+      <div className="chart-card" style={{ marginBottom: '24px', padding: '16px 24px' }}>
+        <h3 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '12px', paddingBottom: '8px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span>Operational Risk Summary</span>
+          <InfoIcon tooltip="Summary of high-risk operational areas based on flight delay and cancellation patterns." />
+        </h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '4px' }}>Highest Delay Airport</span>
+            <span style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)' }}>{riskSummary.highestDelayAirport || 'N/A'}</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '4px' }}>Highest Delay Route</span>
+            <span style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)' }}>{riskSummary.highestDelayRoute || 'N/A'}</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '4px' }}>Most Cancelled Route</span>
+            <span style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)' }}>{riskSummary.mostCancelledRoute || 'N/A'}</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <span style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: '4px' }}>Operational Risk</span>
+            <div>
+              <span className={`health-badge ${riskSummary.operationalRisk === 'High' ? 'red' : riskSummary.operationalRisk === 'Medium' ? 'yellow' : 'green'}`} style={{ fontSize: '12px', padding: '4px 12px' }}>
+                <span className="health-dot" />
+                {riskSummary.operationalRisk || 'Low'}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="chart-grid">
         {/* Delay by Route */}
         <div className="chart-card">
           <h3>
             Top 10 Delay Routes
-            <InfoIcon tooltip="Routes experiencing the highest frequency of flight delays." />
+            <InfoIcon tooltip="Routes experiencing the highest frequency and severity of delays (average minutes and count)." />
           </h3>
-          <div style={{ height: 300 }}>
+          <div style={{ height: 350 }}>
             <ResponsiveContainer>
               <BarChart data={delayByRoute} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                <XAxis type="number" stroke="#64748b" fontSize={12} />
+                <XAxis xAxisId="count" type="number" stroke="#001B94" fontSize={11} />
+                <XAxis xAxisId="avg" type="number" stroke="#00B259" fontSize={11} orientation="top" />
                 <YAxis dataKey="route" type="category" stroke="#64748b" fontSize={11} width={80} />
                 <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
-                <Bar dataKey="count" fill="#f59e0b" radius={[0, 4, 4, 0]} name="Delayed Flights" />
+                <Legend verticalAlign="bottom" height={36} />
+                <Bar xAxisId="count" dataKey="count" fill="#001B94" radius={[0, 4, 4, 0]} name="Delay Count" />
+                <Bar xAxisId="avg" dataKey="avg_delay_minutes" fill="#00B259" radius={[0, 4, 4, 0]} name="Avg Delay (min)" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -111,14 +186,14 @@ const FlightOperationsIntelligence = () => {
             Top 10 Cancellation Routes
             <InfoIcon tooltip="Routes experiencing the highest frequency of cancellations." />
           </h3>
-          <div style={{ height: 300 }}>
+          <div style={{ height: 350 }}>
             <ResponsiveContainer>
               <BarChart data={cancelByRoute} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
                 <XAxis type="number" stroke="#64748b" fontSize={12} />
                 <YAxis dataKey="route" type="category" stroke="#64748b" fontSize={11} width={80} />
                 <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
-                <Bar dataKey="count" fill="#ef4444" radius={[0, 4, 4, 0]} name="Cancelled Flights" />
+                <Bar dataKey="count" fill="#001B94" radius={[0, 4, 4, 0]} name="Cancelled Flights" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -139,31 +214,8 @@ const FlightOperationsIntelligence = () => {
                 <XAxis dataKey="airport" stroke="#64748b" fontSize={12} />
                 <YAxis stroke="#64748b" fontSize={12} />
                 <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
-                <Bar dataKey="count" fill="#3b82f6" radius={[6, 6, 0, 0]} name="Delayed Flights" />
+                <Bar dataKey="count" fill="#001B94" radius={[6, 6, 0, 0]} name="Delayed Flights" />
               </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Flight Status Distribution */}
-        <div className="chart-card">
-          <h3>
-            Flight Status Distribution
-            <InfoIcon tooltip="Percentage breakdown of flight completion status." />
-          </h3>
-          <div style={{ height: 300 }}>
-            <ResponsiveContainer>
-              <PieChart>
-                <Pie data={statusDistribution} cx="50%" cy="50%" innerRadius={65} outerRadius={100} paddingAngle={3} dataKey="count"
-                  label={({ status, percent }) => `${status} ${(percent * 100).toFixed(0)}%`}
-                  nameKey="status"
-                >
-                  {statusDistribution.map((_, i) => (
-                    <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
-              </PieChart>
             </ResponsiveContainer>
           </div>
         </div>
@@ -179,15 +231,35 @@ const FlightOperationsIntelligence = () => {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                <th style={{ textAlign: 'left', padding: '10px', color: '#94a3b8' }}>Route</th>
-                <th style={{ textAlign: 'right', padding: '10px', color: '#94a3b8' }}>Avg Delay (min)</th>
-                <th style={{ textAlign: 'right', padding: '10px', color: '#94a3b8' }}>Total Flights</th>
-                <th style={{ textAlign: 'left', padding: '10px', color: '#94a3b8' }}>Risk Level</th>
+                <th 
+                  onClick={() => requestSort('route')} 
+                  style={{ textAlign: 'left', padding: '10px', color: '#94a3b8', cursor: 'pointer', userSelect: 'none' }}
+                >
+                  Route{getSortIndicator('route')}
+                </th>
+                <th 
+                  onClick={() => requestSort('avg_delay')} 
+                  style={{ textAlign: 'right', padding: '10px', color: '#94a3b8', cursor: 'pointer', userSelect: 'none' }}
+                >
+                  Avg Delay (min){getSortIndicator('avg_delay')}
+                </th>
+                <th 
+                  onClick={() => requestSort('total_flights')} 
+                  style={{ textAlign: 'right', padding: '10px', color: '#94a3b8', cursor: 'pointer', userSelect: 'none' }}
+                >
+                  Total Flights{getSortIndicator('total_flights')}
+                </th>
+                <th 
+                  onClick={() => requestSort('risk_level')} 
+                  style={{ textAlign: 'left', padding: '10px', color: '#94a3b8', cursor: 'pointer', userSelect: 'none' }}
+                >
+                  Risk Level{getSortIndicator('risk_level')}
+                </th>
               </tr>
             </thead>
             <tbody>
-              {routePerformance.map((r, i) => (
-                <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+              {sortedRoutePerformance.map((r, i) => (
+                <tr key={i} className="table-row-hover" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                   <td style={{ padding: '10px', fontWeight: 600 }}>{r.route}</td>
                   <td style={{ padding: '10px', textAlign: 'right' }}>{r.avg_delay}</td>
                   <td style={{ padding: '10px', textAlign: 'right' }}>{r.total_flights}</td>

@@ -274,12 +274,21 @@ def get_flight_operations(month=None, origin=None, destination=None, status=None
     avg_delay = round(flights["delay_minutes"].mean(), 1) if "delay_minutes" in flights.columns and not flights.empty else 0
     
     # Delay by route (top 10)
-    delay_by_route = (
-        flights[flights["status"] == "DELAYED"]
-        .groupby("route").size()
-        .nlargest(10).reset_index()
-    )
-    delay_by_route.columns = ["route", "count"]
+    delay_by_route_df = flights[flights["status"] == "DELAYED"]
+    if not delay_by_route_df.empty:
+        delay_by_route = (
+            delay_by_route_df.groupby("route")
+            .agg(
+                count=("flight_id", "size"),
+                avg_delay_minutes=("delay_minutes", "mean")
+            )
+            .nlargest(10, "count")
+            .reset_index()
+        )
+        delay_by_route["avg_delay_minutes"] = delay_by_route["avg_delay_minutes"].round(1)
+    else:
+        delay_by_route = pd.DataFrame(columns=["route", "count", "avg_delay_minutes"])
+
     
     # Cancellation by route (top 10)
     cancel_by_route = (
@@ -313,6 +322,38 @@ def get_flight_operations(month=None, origin=None, destination=None, status=None
     )
     route_perf["avg_delay"] = route_perf["avg_delay"].round(1)
     
+    # Operational Risk Summary
+    highest_delay_airport = "N/A"
+    if not top_delay_airports.empty:
+        highest_delay_airport = top_delay_airports.iloc[0]["airport"]
+        
+    highest_delay_route = "N/A"
+    if isinstance(delay_by_route, pd.DataFrame) and not delay_by_route.empty:
+        highest_delay_route = delay_by_route.iloc[0]["route"]
+    elif isinstance(delay_by_route, list) and len(delay_by_route) > 0:
+        highest_delay_route = delay_by_route[0]["route"]
+        
+    most_cancelled_route = "N/A"
+    if not cancel_by_route.empty:
+        most_cancelled_route = cancel_by_route.iloc[0]["route"]
+
+    delay_pct = safe_pct(delayed, total)
+    cancel_pct = safe_pct(cancelled, total)
+    
+    if delay_pct > 15 or cancel_pct > 5 or avg_delay > 25:
+        operational_risk = "High"
+    elif delay_pct > 8 or cancel_pct > 2 or avg_delay > 12:
+        operational_risk = "Medium"
+    else:
+        operational_risk = "Low"
+        
+    risk_summary = {
+        "highestDelayAirport": highest_delay_airport,
+        "highestDelayRoute": highest_delay_route,
+        "mostCancelledRoute": most_cancelled_route,
+        "operationalRisk": operational_risk
+    }
+    
     return {
         "kpis": {
             "totalFlights": int(total),
@@ -321,6 +362,7 @@ def get_flight_operations(month=None, origin=None, destination=None, status=None
             "onTime": int(on_time),
             "avgDelay": float(avg_delay),
         },
+        "riskSummary": risk_summary,
         "delayByRoute": delay_by_route.to_dict("records"),
         "cancelByRoute": cancel_by_route.to_dict("records"),
         "topDelayAirports": top_delay_airports.to_dict("records"),
@@ -359,8 +401,39 @@ def get_financial_intelligence(month=None, route=None):
     rev_by_route.columns = ["route", "revenue"]
     rev_by_route["revenue"] = rev_by_route["revenue"].round(2)
     
-    # Revenue distribution by season tag
-    rev_by_season = rev.groupby("season_tag")["revenue"].sum().reset_index() if "season_tag" in rev.columns else pd.DataFrame()
+    # Calculate revenue loss (revenue drop from Nov to Dec)
+    # If route filter is applied, we calculate for that route.
+    all_rev = load_revenue()
+    if route and route != "All":
+        all_rev = all_rev[all_rev["route"] == route]
+    
+    nov_rev_total = float(all_rev[all_rev["month"] == "Nov"]["revenue"].sum()) if not all_rev.empty else 0.0
+    dec_rev_total = float(all_rev[all_rev["month"] == "Dec"]["revenue"].sum()) if not all_rev.empty else 0.0
+    revenue_lost = max(0.0, nov_rev_total - dec_rev_total) if (month == "All" or month == "Dec" or not month) else 0.0
+
+    # Top 10 routes revenue share for concentration analysis
+    if not rev.empty:
+        total_rev_sum = float(rev["revenue"].sum())
+        route_rev_grouped = rev.groupby("route")["revenue"].sum().reset_index()
+        top_10_routes = route_rev_grouped.nlargest(10, "revenue")
+        
+        other_revenue = total_rev_sum - float(top_10_routes["revenue"].sum())
+        
+        revenue_share = []
+        for _, r in top_10_routes.iterrows():
+            revenue_share.append({
+                "name": r["route"],
+                "value": float(r["revenue"]),
+                "percentage": round((float(r["revenue"]) / total_rev_sum) * 100, 1)
+            })
+        if other_revenue > 0:
+            revenue_share.append({
+                "name": "Other Routes",
+                "value": float(other_revenue),
+                "percentage": round((other_revenue / total_rev_sum) * 100, 1)
+            })
+    else:
+        revenue_share = []
     
     # Refund by route (top 10)
     refund_by_route = rev[rev["refunds_issued"] > 0].groupby("route")["refunds_issued"].sum().nlargest(10).reset_index()
@@ -385,6 +458,8 @@ def get_financial_intelligence(month=None, route=None):
     if total_refunds > 0:
         insights.append(f"💸 Total refunds: ₹{total_refunds/100000:.1f} Lakh — refunds increased during disruption periods.")
     insights.append(f"✈️ Average load factor: {avg_load}% across all routes.")
+    if revenue_lost > 0:
+        insights.append(f"⚠️ Revenue drop from Nov to Dec: ₹{revenue_lost/10000000:.1f} Cr due to winter flight cancellations.")
     
     return {
         "kpis": {
@@ -395,11 +470,12 @@ def get_financial_intelligence(month=None, route=None):
             "topRevenueRoute": top_route,
             "avgFare": avg_fare,
             "avgLoadFactor": avg_load,
+            "revenueLost": round(revenue_lost, 2),
         },
         "revenueByRoute": rev_by_route.to_dict("records"),
         "refundByRoute": refund_by_route.to_dict("records"),
         "revenueTrend": rev_trend,
-        "revenueBySeasonTag": rev_by_season.to_dict("records") if not rev_by_season.empty else [],
+        "revenueShare": revenue_share,
         "insights": insights,
     }
 

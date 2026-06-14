@@ -8,7 +8,7 @@ import FilterPanel from '../components/FilterPanel';
 import InfoIcon from '../components/InfoIcon';
 
 const API = 'http://127.0.0.1:8000';
-const COLORS = ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#06b6d4', '#f97316'];
+const COLORS = ['#001B94', '#00B259', '#3349aa', '#33c17a', '#6677bf', '#66d19c', '#4d6eb2'];
 
 const RiskComplianceCenter = () => {
   const [data, setData] = useState(null);
@@ -107,7 +107,7 @@ const RiskComplianceCenter = () => {
                 <XAxis dataKey="type" stroke="#64748b" fontSize={11} />
                 <YAxis stroke="#64748b" fontSize={12} />
                 <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
-                <Bar dataKey="count" fill="#ef4444" radius={[6, 6, 0, 0]} name="Violations" />
+                <Bar dataKey="count" fill="#001B94" radius={[6, 6, 0, 0]} name="Violations" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -125,8 +125,8 @@ const RiskComplianceCenter = () => {
                 <Pie data={fdtlBreakdown} cx="50%" cy="50%" innerRadius={65} outerRadius={100} paddingAngle={5} dataKey="value" nameKey="status"
                   label={({ status, percent }) => `${status} ${(percent * 100).toFixed(0)}%`}
                 >
-                  <Cell fill="#10b981" />
-                  <Cell fill="#ef4444" />
+                  <Cell fill="#00B259" />
+                  <Cell fill="#001B94" />
                 </Pie>
                 <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
               </PieChart>
@@ -149,7 +149,7 @@ const RiskComplianceCenter = () => {
                 <XAxis dataKey="type" stroke="#64748b" fontSize={10} />
                 <YAxis stroke="#64748b" fontSize={12} />
                 <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
-                <Bar dataKey="count" fill="#f59e0b" radius={[6, 6, 0, 0]} name="Incidents" />
+                <Bar dataKey="count" fill="#00B259" radius={[6, 6, 0, 0]} name="Incidents" />
               </BarChart>
             </ResponsiveContainer>
           </div>

@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
   LineChart, Line, PieChart, Pie, Cell,
+  Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
 } from 'recharts';
 import FilterPanel from '../components/FilterPanel';
 import InfoIcon from '../components/InfoIcon';
 
 const API = 'http://127.0.0.1:8000';
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899', '#14b8a6', '#a855f7'];
+const COLORS = ['#001B94', '#00B259', '#3349aa', '#33c17a', '#6677bf', '#66d19c', '#99a4d4', '#99e0bd', '#4d60b3', '#1aa66b'];
 
 const FinancialIntelligence = () => {
   const [data, setData] = useState(null);
@@ -36,7 +37,7 @@ const FinancialIntelligence = () => {
   );
   if (!data) return <div className="dashboard-container"><p>Failed to load data.</p></div>;
 
-  const { kpis, revenueByRoute, refundByRoute, revenueTrend, revenueBySeasonTag, insights } = data;
+  const { kpis, revenueByRoute, refundByRoute, revenueTrend, revenueShare, insights } = data;
 
   return (
     <div className="dashboard-container">
@@ -61,6 +62,15 @@ const FinancialIntelligence = () => {
             <InfoIcon tooltip="Total ticket sales revenue collected in December 2025." />
           </div>
           <div className="kpi-value">₹{(kpis.decRevenue / 10000000).toFixed(2)} Cr</div>
+        </div>
+        <div className="kpi-card" style={{ borderLeftColor: 'var(--danger)' }}>
+          <div className="kpi-title">
+            Revenue Lost
+            <InfoIcon tooltip="Calculated revenue lost due to winter flight cancellations and drop between November and December." />
+          </div>
+          <div className="kpi-value" style={{ color: 'var(--danger)' }}>
+            ₹{(kpis.revenueLost / 10000000).toFixed(1)} Cr
+          </div>
         </div>
         <div className="kpi-card" style={{ borderLeftColor: kpis.revChangePercent < 0 ? 'var(--danger)' : 'var(--success)' }}>
           <div className="kpi-title">
@@ -95,23 +105,30 @@ const FinancialIntelligence = () => {
       </div>
 
       <div className="chart-grid">
-        {/* Top 10 Revenue Routes */}
+        {/* Top 10 Revenue Routes - Radar Chart */}
         <div className="chart-card">
           <h3>
             Top 10 Revenue Routes
-            <InfoIcon tooltip="Routes generating the highest total passenger ticket sales." />
+            <InfoIcon tooltip="Radar mapping of passenger ticket revenue across the top 10 routes." />
           </h3>
-          <div style={{ height: 350 }}>
-            <ResponsiveContainer>
-              <BarChart data={revenueByRoute} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                <XAxis type="number" stroke="#64748b" fontSize={12} tickFormatter={v => `₹${(v/10000000).toFixed(1)}Cr`} />
-                <YAxis dataKey="route" type="category" stroke="#64748b" fontSize={11} width={80} />
-                <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+          <div style={{ height: 350, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart cx="50%" cy="50%" outerRadius="70%" data={revenueByRoute}>
+                <PolarGrid stroke="rgba(255,255,255,0.08)" />
+                <PolarAngleAxis dataKey="route" stroke="var(--text-secondary)" fontSize={11} />
+                <PolarRadiusAxis 
+                  angle={30} 
+                  domain={[0, 'dataMax + 10000000']} 
+                  stroke="var(--text-muted)" 
+                  fontSize={10} 
+                  tickFormatter={v => `₹${(v/10000000).toFixed(1)}Cr`}
+                />
+                <Radar name="Revenue" dataKey="revenue" stroke="#00B259" fill="#00B259" fillOpacity={0.3} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
                   formatter={v => [`₹${(v/10000000).toFixed(2)} Cr`, 'Revenue']}
                 />
-                <Bar dataKey="revenue" fill="#10b981" radius={[0, 4, 4, 0]} />
-              </BarChart>
+              </RadarChart>
             </ResponsiveContainer>
           </div>
         </div>
@@ -131,7 +148,7 @@ const FinancialIntelligence = () => {
                 <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
                   formatter={v => [`₹${(v/100000).toFixed(1)} Lakh`, 'Refunds']}
                 />
-                <Bar dataKey="refunds" fill="#ef4444" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="refunds" fill="#001B94" radius={[0, 4, 4, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -154,30 +171,71 @@ const FinancialIntelligence = () => {
                 <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
                   formatter={v => [`₹${(v/10000000).toFixed(2)} Cr`, 'Revenue']}
                 />
-                <Line type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="revenue" stroke="#001B94" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Revenue by Season */}
-        {revenueBySeasonTag.length > 0 && (
+        {/* Revenue Concentration Analysis */}
+        {revenueShare && revenueShare.length > 0 && (
           <div className="chart-card">
             <h3>
-              Revenue by Season Tag
-              <InfoIcon tooltip="Percentage breakdown of total flight revenue categorized by season." />
+              Top 10 Routes Revenue Contribution
+              <InfoIcon tooltip="Revenue share breakdown among the top 10 highest performing routes." />
             </h3>
-            <div style={{ height: 300 }}>
-              <ResponsiveContainer>
-                <PieChart>
-                  <Pie data={revenueBySeasonTag} cx="50%" cy="50%" innerRadius={65} outerRadius={100} paddingAngle={3} dataKey="revenue"
-                    nameKey="season_tag" label={({ season_tag, percent }) => `${season_tag} ${(percent * 100).toFixed(0)}%`}
-                  >
-                    {revenueBySeasonTag.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                  </Pie>
-                  <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
-                </PieChart>
-              </ResponsiveContainer>
+            <div style={{ height: 300, display: 'flex', alignItems: 'center', gap: '24px' }}>
+              <div style={{ flex: 1.3, height: '100%' }}>
+                <ResponsiveContainer>
+                  <PieChart>
+                    <Pie
+                      data={revenueShare.filter(r => r.name !== 'Other Routes')}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={85}
+                      paddingAngle={3}
+                      dataKey="value"
+                      nameKey="name"
+                      label={false}
+                    >
+                      {revenueShare.filter(r => r.name !== 'Other Routes').map((_, i) => (
+                        <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                      formatter={(value, name) => {
+                        const topRoutes = revenueShare.filter(r => r.name !== 'Other Routes');
+                        const totalTop10 = topRoutes.reduce((sum, r) => sum + r.value, 0);
+                        const pctOfTop10 = ((value / totalTop10) * 100).toFixed(1);
+                        return [`₹${(value / 10000000).toFixed(2)} Cr (${pctOfTop10}% of Top 10)`, 'Revenue'];
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div style={{ width: '210px', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingRight: '5px' }}>
+                <h4 style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px', fontWeight: 700 }}>Top 5 Routes Breakdown</h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {(() => {
+                    const topRoutes = revenueShare.filter(r => r.name !== 'Other Routes');
+                    const totalTop10 = topRoutes.reduce((sum, r) => sum + r.value, 0);
+                    return topRoutes.slice(0, 5).map((route, i) => {
+                      const shareOfTop10 = ((route.value / totalTop10) * 100).toFixed(1);
+                      return (
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--text-secondary)', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '4px', alignItems: 'center' }}>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: COLORS[i % COLORS.length] }} />
+                            <span style={{ fontWeight: 600 }}>{route.name}</span>
+                          </span>
+                          <span style={{ color: 'var(--text-primary)' }}>{shareOfTop10}%</span>
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+              </div>
             </div>
           </div>
         )}
