@@ -2,9 +2,9 @@
   "name": "indigo-dashboard-root",
   "version": "1.0.0",
   "scripts": {
-    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "dev:backend": "powershell -ExecutionPolicy Bypass -Command \"cd backend; .\\venv\\Scripts\\activate; uvicorn main:app --reload\"",
-    "dev:frontend": "cd frontend && npm run dev"
+    "dev": "concurrently --raw \"npm run -s dev:backend\" \"npm run -s dev:frontend\"",
+    "dev:backend": "powershell -ExecutionPolicy Bypass -Command \"cd backend; .\\venv\\Scripts\\activate; uvicorn main:app --reload --log-level warning\"",
+    "dev:frontend": "cd frontend && npm run -s dev"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

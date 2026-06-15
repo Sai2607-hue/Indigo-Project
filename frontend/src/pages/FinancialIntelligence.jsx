@@ -4,6 +4,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
   LineChart, Line, PieChart, Pie, Cell,
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
+  RadialBarChart, RadialBar
 } from 'recharts';
 import FilterPanel from '../components/FilterPanel';
 import InfoIcon from '../components/InfoIcon';
@@ -86,7 +87,7 @@ const FinancialIntelligence = () => {
             Total Refunds
             <InfoIcon tooltip="Total refunds issued to passengers due to disruptions." />
           </div>
-          <div className="kpi-value">₹{(kpis.totalRefunds / 100000).toFixed(1)} L</div>
+          <div className="kpi-value">{kpis.totalRefunds.toLocaleString()}</div>
         </div>
         <div className="kpi-card" style={{ borderLeftColor: 'var(--success)' }}>
           <div className="kpi-title">
@@ -105,30 +106,28 @@ const FinancialIntelligence = () => {
       </div>
 
       <div className="chart-grid">
-        {/* Top 10 Revenue Routes - Radar Chart */}
+        {/* Top 10 Revenue Routes - Bar Chart */}
         <div className="chart-card">
           <h3>
             Top 10 Revenue Routes
-            <InfoIcon tooltip="Radar mapping of passenger ticket revenue across the top 10 routes." />
+            <InfoIcon tooltip="Passenger ticket revenue across the top 10 routes." />
           </h3>
-          <div style={{ height: 350, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart cx="50%" cy="50%" outerRadius="70%" data={revenueByRoute}>
-                <PolarGrid stroke="rgba(255,255,255,0.08)" />
-                <PolarAngleAxis dataKey="route" stroke="var(--text-secondary)" fontSize={11} />
-                <PolarRadiusAxis 
-                  angle={30} 
-                  domain={[0, 'dataMax + 10000000']} 
-                  stroke="var(--text-muted)" 
-                  fontSize={10} 
-                  tickFormatter={v => `₹${(v/10000000).toFixed(1)}Cr`}
+          <div style={{ height: 350 }}>
+            <ResponsiveContainer>
+              <BarChart data={revenueByRoute}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,27,148,0.06)" />
+                <XAxis dataKey="route" stroke="#64748b" fontSize={11} />
+                <YAxis 
+                  stroke="#64748b" 
+                  fontSize={11} 
+                  tickFormatter={v => `₹${(v/10000000).toFixed(0)}Cr`}
                 />
-                <Radar name="Revenue" dataKey="revenue" stroke="#00B259" fill="#00B259" fillOpacity={0.3} />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                  contentStyle={{ backgroundColor: '#ffffff', border: '1px solid rgba(0,27,148,0.08)', borderRadius: '8px', color: '#1e293b' }}
                   formatter={v => [`₹${(v/10000000).toFixed(2)} Cr`, 'Revenue']}
                 />
-              </RadarChart>
+                <Bar dataKey="revenue" fill="#00B259" radius={[4, 4, 0, 0]} name="Revenue" />
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
@@ -142,11 +141,11 @@ const FinancialIntelligence = () => {
           <div style={{ height: 350 }}>
             <ResponsiveContainer>
               <BarChart data={refundByRoute} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                <XAxis type="number" stroke="#64748b" fontSize={12} tickFormatter={v => `₹${(v/100000).toFixed(0)}L`} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,27,148,0.06)" />
+                <XAxis type="number" stroke="#64748b" fontSize={12} tickFormatter={v => v.toLocaleString()} />
                 <YAxis dataKey="route" type="category" stroke="#64748b" fontSize={11} width={80} />
-                <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
-                  formatter={v => [`₹${(v/100000).toFixed(1)} Lakh`, 'Refunds']}
+                <Tooltip contentStyle={{ backgroundColor: '#ffffff', border: '1px solid rgba(0,27,148,0.08)', borderRadius: '8px', color: '#1e293b' }}
+                  formatter={v => [`${v.toLocaleString()} refunds`, 'Refunds']}
                 />
                 <Bar dataKey="refunds" fill="#001B94" radius={[0, 4, 4, 0]} />
               </BarChart>
@@ -165,10 +164,10 @@ const FinancialIntelligence = () => {
           <div style={{ height: 300 }}>
             <ResponsiveContainer>
               <LineChart data={revenueTrend}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,27,148,0.06)" />
                 <XAxis dataKey="date" stroke="#64748b" fontSize={10} tickFormatter={d => d ? d.slice(5) : ''} interval={Math.floor(revenueTrend.length / 8)} />
                 <YAxis stroke="#64748b" fontSize={12} tickFormatter={v => `₹${(v/10000000).toFixed(1)}Cr`} />
-                <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                <Tooltip contentStyle={{ backgroundColor: '#ffffff', border: '1px solid rgba(0,27,148,0.08)', borderRadius: '8px', color: '#1e293b' }}
                   formatter={v => [`₹${(v/10000000).toFixed(2)} Cr`, 'Revenue']}
                 />
                 <Line type="monotone" dataKey="revenue" stroke="#001B94" strokeWidth={2} dot={false} />
@@ -184,58 +183,24 @@ const FinancialIntelligence = () => {
               Top 10 Routes Revenue Contribution
               <InfoIcon tooltip="Revenue share breakdown among the top 10 highest performing routes." />
             </h3>
-            <div style={{ height: 300, display: 'flex', alignItems: 'center', gap: '24px' }}>
-              <div style={{ flex: 1.3, height: '100%' }}>
-                <ResponsiveContainer>
-                  <PieChart>
-                    <Pie
-                      data={revenueShare.filter(r => r.name !== 'Other Routes')}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={85}
-                      paddingAngle={3}
-                      dataKey="value"
-                      nameKey="name"
-                      label={false}
-                    >
-                      {revenueShare.filter(r => r.name !== 'Other Routes').map((_, i) => (
-                        <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
-                      formatter={(value, name) => {
-                        const topRoutes = revenueShare.filter(r => r.name !== 'Other Routes');
-                        const totalTop10 = topRoutes.reduce((sum, r) => sum + r.value, 0);
-                        const pctOfTop10 = ((value / totalTop10) * 100).toFixed(1);
-                        return [`₹${(value / 10000000).toFixed(2)} Cr (${pctOfTop10}% of Top 10)`, 'Revenue'];
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <div style={{ width: '210px', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingRight: '5px' }}>
-                <h4 style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px', fontWeight: 700 }}>Top 5 Routes Breakdown</h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {(() => {
-                    const topRoutes = revenueShare.filter(r => r.name !== 'Other Routes');
-                    const totalTop10 = topRoutes.reduce((sum, r) => sum + r.value, 0);
-                    return topRoutes.slice(0, 5).map((route, i) => {
-                      const shareOfTop10 = ((route.value / totalTop10) * 100).toFixed(1);
-                      return (
-                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--text-secondary)', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '4px', alignItems: 'center' }}>
-                          <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: COLORS[i % COLORS.length] }} />
-                            <span style={{ fontWeight: 600 }}>{route.name}</span>
-                          </span>
-                          <span style={{ color: 'var(--text-primary)' }}>{shareOfTop10}%</span>
-                        </div>
-                      );
-                    });
-                  })()}
-                </div>
-              </div>
+            <div style={{ height: 300 }}>
+              <ResponsiveContainer>
+                <BarChart data={revenueShare.filter(r => r.name !== 'Other Routes').sort((a, b) => b.value - a.value)} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,27,148,0.06)" />
+                  <XAxis type="number" stroke="#64748b" fontSize={11} tickFormatter={v => `₹${(v/10000000).toFixed(1)}Cr`} />
+                  <YAxis dataKey="name" type="category" stroke="#64748b" fontSize={11} width={80} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#ffffff', border: '1px solid rgba(0,27,148,0.08)', borderRadius: '8px', color: '#1e293b' }}
+                    formatter={(value, name, props) => {
+                      const topRoutes = revenueShare.filter(r => r.name !== 'Other Routes');
+                      const totalTop10 = topRoutes.reduce((sum, r) => sum + r.value, 0);
+                      const pctOfTop10 = ((value / totalTop10) * 100).toFixed(1);
+                      return [`₹${(value / 10000000).toFixed(2)} Cr (${pctOfTop10}%)`, 'Revenue'];
+                    }}
+                  />
+                  <Bar dataKey="value" fill="#001B94" radius={[0, 4, 4, 0]} name="Revenue" />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </div>
         )}

@@ -9,6 +9,7 @@ from services import (
     get_crew_optimization,
     get_risk_compliance,
     get_predictive_intelligence,
+    get_decision_lab,
 )
 
 app = FastAPI(title="Indigo Airlines Operational Intelligence API")
@@ -31,8 +32,12 @@ def get_filters():
     return get_filter_options()
 
 @app.get("/api/executive-center")
-def executive_center(month: Optional[str] = Query(None)):
-    return get_executive_center(month)
+def executive_center(
+    month: Optional[str] = Query(None),
+    airport: Optional[str] = Query(None),
+    route: Optional[str] = Query(None),
+):
+    return get_executive_center(month, airport, route)
 
 @app.get("/api/flight-operations")
 def flight_operations(
@@ -64,6 +69,10 @@ def risk_compliance(month: Optional[str] = Query(None)):
 @app.get("/api/predictive-intelligence")
 def predictive_intelligence():
     return get_predictive_intelligence()
+
+@app.get("/api/decision-lab")
+def decision_lab():
+    return get_decision_lab()
 
 # Legacy endpoint for backward compat
 @app.get("/api/summary")

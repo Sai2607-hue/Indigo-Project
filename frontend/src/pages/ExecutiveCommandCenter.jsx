@@ -12,7 +12,7 @@ const COLORS = { onTime: '#00B259', delayed: '#001B94', cancelled: '#4d6eb2' };
 const ExecutiveCommandCenter = () => {
   const [data, setData] = useState(null);
   const [filterOptions, setFilterOptions] = useState({});
-  const [filters, setFilters] = useState({ month: 'All' });
+  const [filters, setFilters] = useState({ month: 'All', airport: 'All', route: 'All' });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -23,6 +23,8 @@ const ExecutiveCommandCenter = () => {
     setLoading(true);
     const params = {};
     if (filters.month !== 'All') params.month = filters.month;
+    if (filters.airport !== 'All') params.airport = filters.airport;
+    if (filters.route !== 'All') params.route = filters.route;
     axios.get(`${API}/api/executive-center`, { params })
       .then(r => { setData(r.data); setLoading(false); })
       .catch(() => setLoading(false));
@@ -98,11 +100,11 @@ const ExecutiveCommandCenter = () => {
         </div>
         <div className="kpi-card" style={{ borderLeftColor: 'var(--danger)' }}>
           <div className="kpi-title">
-            DGCA Penalties
+            DGCA Events
             <InfoIcon tooltip="Total count and monetary value of regulatory penalties levied by the DGCA." />
           </div>
           <div className="kpi-value">{kpis.totalPenalties}</div>
-          <div className="kpi-subtitle">₹{kpis.penaltyAmount} Lakh</div>
+          <div className="kpi-subtitle">Penalty Exposure: ₹{(kpis.penaltyAmount / 100).toFixed(2)} Cr</div>
         </div>
       </div>
 
@@ -124,7 +126,7 @@ const ExecutiveCommandCenter = () => {
                   <Cell fill={COLORS.delayed} />
                   <Cell fill={COLORS.cancelled} />
                 </Pie>
-                <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
+                <Tooltip contentStyle={{ backgroundColor: '#ffffff', border: '1px solid rgba(0,27,148,0.08)', borderRadius: '8px', color: '#1e293b' }} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -139,7 +141,7 @@ const ExecutiveCommandCenter = () => {
           <div style={{ height: 260, overflowY: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                <tr style={{ borderBottom: '1px solid rgba(0,27,148,0.08)' }}>
                   <th style={{ textAlign: 'left', padding: '10px 8px', color: 'var(--text-muted)' }}>Route</th>
                   <th style={{ textAlign: 'right', padding: '10px 8px', color: 'var(--text-muted)' }}>Delays</th>
                   <th style={{ textAlign: 'right', padding: '10px 8px', color: 'var(--text-muted)' }}>Revenue</th>
@@ -148,7 +150,7 @@ const ExecutiveCommandCenter = () => {
               </thead>
               <tbody>
                 {topRiskRoutes && topRiskRoutes.map((r, i) => (
-                  <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }} className="table-row-hover">
+                  <tr key={i} style={{ borderBottom: '1px solid rgba(0,27,148,0.04)' }} className="table-row-hover">
                     <td style={{ padding: '12px 8px', fontWeight: 600 }}>{r.route}</td>
                     <td style={{ padding: '12px 8px', textAlign: 'right', color: 'var(--warning)', fontWeight: 600 }}>{r.delays}</td>
                     <td style={{ padding: '12px 8px', textAlign: 'right', color: 'var(--success)' }}>₹{(r.revenue / 10000000).toFixed(2)} Cr</td>

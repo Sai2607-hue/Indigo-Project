@@ -89,10 +89,10 @@ const CrewOptimizationCenter = () => {
           <div style={{ height: 300 }}>
             <ResponsiveContainer>
               <BarChart data={blockHoursDistribution}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,27,148,0.06)" />
                 <XAxis dataKey="range" stroke="#64748b" fontSize={11} />
                 <YAxis stroke="#64748b" fontSize={12} />
-                <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
+                <Tooltip contentStyle={{ backgroundColor: '#ffffff', border: '1px solid rgba(0,27,148,0.08)', borderRadius: '8px', color: '#1e293b' }} />
                 <Bar dataKey="count" fill="#001B94" radius={[6, 6, 0, 0]} name="Crew Members" />
               </BarChart>
             </ResponsiveContainer>
@@ -108,10 +108,10 @@ const CrewOptimizationCenter = () => {
           <div style={{ height: 300 }}>
             <ResponsiveContainer>
               <BarChart data={restHoursDistribution}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,27,148,0.06)" />
                 <XAxis dataKey="range" stroke="#64748b" fontSize={11} />
                 <YAxis stroke="#64748b" fontSize={12} />
-                <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
+                <Tooltip contentStyle={{ backgroundColor: '#ffffff', border: '1px solid rgba(0,27,148,0.08)', borderRadius: '8px', color: '#1e293b' }} />
                 <Bar dataKey="count" fill="#00B259" radius={[6, 6, 0, 0]} name="Crew Members" />
               </BarChart>
             </ResponsiveContainer>
@@ -136,7 +136,7 @@ const CrewOptimizationCenter = () => {
                     <Cell key={i} fill={entry.status === 'Compliant' ? '#00B259' : '#001B94'} />
                   ))}
                 </Pie>
-                <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
+                <Tooltip contentStyle={{ backgroundColor: '#ffffff', border: '1px solid rgba(0,27,148,0.08)', borderRadius: '8px', color: '#1e293b' }} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -151,10 +151,10 @@ const CrewOptimizationCenter = () => {
           <div style={{ height: 300 }}>
             <ResponsiveContainer>
               <BarChart data={baseStationAnalysis} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,27,148,0.06)" />
                 <XAxis type="number" stroke="#64748b" fontSize={12} />
                 <YAxis dataKey="base_station" type="category" stroke="#64748b" fontSize={11} width={50} />
-                <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
+                <Tooltip contentStyle={{ backgroundColor: '#ffffff', border: '1px solid rgba(0,27,148,0.08)', borderRadius: '8px', color: '#1e293b' }} />
                 <Bar dataKey="crew_count" fill="#001B94" radius={[0, 4, 4, 0]} name="Crew Count" />
               </BarChart>
             </ResponsiveContainer>
@@ -162,26 +162,7 @@ const CrewOptimizationCenter = () => {
         </div>
       </div>
 
-      <div className="chart-grid">
-        {/* Duty Type Distribution */}
-        <div className="chart-card">
-          <h3>
-            Duty Type Distribution
-            <InfoIcon tooltip="Roster allocations segmented by flight duties, stand-bys, and training sessions." />
-          </h3>
-          <div style={{ height: 300 }}>
-            <ResponsiveContainer>
-              <PieChart>
-                <Pie data={dutyTypeDistribution} cx="50%" cy="50%" innerRadius={65} outerRadius={100} paddingAngle={3} dataKey="count" nameKey="type"
-                  label={({ type, percent }) => `${type} ${(percent * 100).toFixed(0)}%`}
-                >
-                  {dutyTypeDistribution.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                </Pie>
-                <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+      <div className="chart-grid" style={{ gridTemplateColumns: '1fr' }}>
 
         {/* Optimization Panel */}
         <div className="optimization-panel">

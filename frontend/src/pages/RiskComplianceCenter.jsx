@@ -62,11 +62,11 @@ const RiskComplianceCenter = () => {
         </div>
         <div className="kpi-card" style={{ borderLeftColor: 'var(--danger)' }}>
           <div className="kpi-title">
-            DGCA Violations (IndiGo)
+            DGCA Events
             <InfoIcon tooltip="Number of regulatory compliance violations reported by DGCA." />
           </div>
           <div className="kpi-value">{kpis.dgcaViolations}</div>
-          <div className="kpi-subtitle">₹{kpis.penaltyAmountLakh} Lakh in penalties</div>
+          <div className="kpi-subtitle">Penalty Exposure: ₹{(kpis.penaltyAmountLakh / 100).toFixed(2)} Cr</div>
         </div>
         <div className="kpi-card" style={{ borderLeftColor: 'var(--warning)' }}>
           <div className="kpi-title">
@@ -103,10 +103,10 @@ const RiskComplianceCenter = () => {
           <div style={{ height: 300 }}>
             <ResponsiveContainer>
               <BarChart data={dgcaViolationTypes}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,27,148,0.06)" />
                 <XAxis dataKey="type" stroke="#64748b" fontSize={11} />
                 <YAxis stroke="#64748b" fontSize={12} />
-                <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
+                <Tooltip contentStyle={{ backgroundColor: '#ffffff', border: '1px solid rgba(0,27,148,0.08)', borderRadius: '8px', color: '#1e293b' }} />
                 <Bar dataKey="count" fill="#001B94" radius={[6, 6, 0, 0]} name="Violations" />
               </BarChart>
             </ResponsiveContainer>
@@ -128,7 +128,7 @@ const RiskComplianceCenter = () => {
                   <Cell fill="#00B259" />
                   <Cell fill="#001B94" />
                 </Pie>
-                <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
+                <Tooltip contentStyle={{ backgroundColor: '#ffffff', border: '1px solid rgba(0,27,148,0.08)', borderRadius: '8px', color: '#1e293b' }} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -145,10 +145,10 @@ const RiskComplianceCenter = () => {
           <div style={{ height: 300 }}>
             <ResponsiveContainer>
               <BarChart data={incidentTypes}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,27,148,0.06)" />
                 <XAxis dataKey="type" stroke="#64748b" fontSize={10} />
                 <YAxis stroke="#64748b" fontSize={12} />
-                <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
+                <Tooltip contentStyle={{ backgroundColor: '#ffffff', border: '1px solid rgba(0,27,148,0.08)', borderRadius: '8px', color: '#1e293b' }} />
                 <Bar dataKey="count" fill="#00B259" radius={[6, 6, 0, 0]} name="Incidents" />
               </BarChart>
             </ResponsiveContainer>
@@ -169,7 +169,7 @@ const RiskComplianceCenter = () => {
                 >
                   {severityDistribution.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                 </Pie>
-                <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }} />
+                <Tooltip contentStyle={{ backgroundColor: '#ffffff', border: '1px solid rgba(0,27,148,0.08)', borderRadius: '8px', color: '#1e293b' }} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -186,16 +186,16 @@ const RiskComplianceCenter = () => {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                <tr style={{ borderBottom: '1px solid rgba(0,27,148,0.08)' }}>
                   <th style={{ textAlign: 'left', padding: '10px', color: '#94a3b8' }}>Status</th>
                   <th style={{ textAlign: 'right', padding: '10px', color: '#94a3b8' }}>Count</th>
                 </tr>
               </thead>
               <tbody>
                 {penaltyStatusBreakdown.map((r, i) => (
-                  <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                  <tr key={i} style={{ borderBottom: '1px solid rgba(0,27,148,0.04)' }}>
                     <td style={{ padding: '10px' }}>
-                      <span className={`health-badge ${r.status === 'PAID' ? 'red' : r.status === 'PENDING' ? 'yellow' : 'green'}`} style={{ fontSize: '11px', padding: '3px 10px' }}>
+                      <span className={`health-badge ${r.status === 'PENDING' ? 'red' : r.status === 'APPEALED' ? 'yellow' : 'green'}`} style={{ fontSize: '11px', padding: '3px 10px' }}>
                         <span className="health-dot" style={{ width: 6, height: 6 }} />
                         {r.status}
                       </span>

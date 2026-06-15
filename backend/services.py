@@ -28,6 +28,11 @@ def load_revenue():
     dec["month"] = "Dec"
     df = pd.concat([nov, dec], ignore_index=True)
     df["route"] = df["origin"] + "-" + df["destination"]
+    
+    # Scale down revenue by 10 to correct the crore conversion bug
+    if "revenue" in df.columns:
+        df["revenue"] = df["revenue"] / 10
+        
     return df
 
 @lru_cache(maxsize=1)
@@ -123,14 +128,41 @@ def filter_by_status(df, status):
         return df[df["status"] == status]
     return df
 
+def filter_by_airport(df, airport):
+    if airport and airport != "All":
+        conds = []
+        if "origin" in df.columns:
+            conds.append(df["origin"] == airport)
+        if "destination" in df.columns:
+            conds.append(df["destination"] == airport)
+        if len(conds) == 2:
+            return df[conds[0] | conds[1]]
+        elif len(conds) == 1:
+            return df[conds[0]]
+    return df
+
 # ─── Executive Command Center ────────────────────────────────────────────────
 
-def get_executive_center(month=None):
-    flights = filter_by_month(load_flights(), month)
-    revenue_df = filter_by_month(load_revenue(), month)
+def get_executive_center(month=None, airport=None, route=None):
+    flights = load_flights()
+    revenue_df = load_revenue()
     penalties = load_dgca_penalties()
     indigo_penalties = penalties[penalties["airline"] == "IndiGo"]
     fdtl = load_fdtl_compliance()
+    
+    # Apply filters
+    flights = filter_by_month(flights, month)
+    revenue_df = filter_by_month(revenue_df, month)
+    
+    if airport and airport != "All":
+        flights = filter_by_airport(flights, airport)
+        revenue_df = filter_by_airport(revenue_df, airport)
+        
+    if route and route != "All":
+        if "route" in flights.columns:
+            flights = flights[flights["route"] == route]
+        if "route" in revenue_df.columns:
+            revenue_df = revenue_df[revenue_df["route"] == route]
     
     total_flights = len(flights)
     delayed = len(flights[flights["status"] == "DELAYED"]) if "status" in flights.columns else 0
@@ -237,7 +269,7 @@ def get_executive_center(month=None):
     if cancel_pct > 0:
         insights.append(f"⛈️ Cancellation rate is at {cancel_pct}% — weather disruptions may be contributing.")
     if total_penalties > 0:
-        insights.append(f"📋 {total_penalties} DGCA penalties totaling ₹{total_penalty_amount:.1f} Lakh recorded against IndiGo.")
+        insights.append(f"📋 {total_penalties} DGCA penalties totaling ₹{total_penalty_amount / 100:.2f} Cr recorded against IndiGo.")
     
     return {
         "kpis": {
@@ -354,6 +386,59 @@ def get_flight_operations(month=None, origin=None, destination=None, status=None
         "operationalRisk": operational_risk
     }
     
+    # Airport Performance (for the Geo Map)
+    airport_perf = []
+    if not flights.empty:
+        # Group by origin airport
+        grouped = flights.groupby("origin")
+        for airport_code, group in grouped:
+            total_f = len(group)
+            delays_f = len(group[group["status"] == "DELAYED"]) if "status" in group.columns else 0
+            cancels_f = len(group[group["status"] == "CANCELLED"]) if "status" in group.columns else 0
+            
+            avg_d = round(group["delay_minutes"].mean(), 1) if "delay_minutes" in group.columns else 0.0
+            if np.isnan(avg_d):
+                avg_d = 0.0
+                
+            delay_p = safe_pct(delays_f, total_f)
+            cancel_p = safe_pct(cancels_f, total_f)
+            
+            # Risk assessment
+            if avg_d > 20 or delay_p > 20 or cancel_p > 10:
+                risk = "High"
+            elif avg_d > 10 or delay_p > 10 or cancel_p > 5:
+                risk = "Medium"
+            else:
+                risk = "Low"
+                
+            # Get top delayed routes from this airport
+            top_routes_list = []
+            delayed_group = group[group["status"] == "DELAYED"]
+            if not delayed_group.empty and "route" in delayed_group.columns:
+                top_routes = delayed_group.groupby("route").agg(
+                    count=("flight_id", "size"),
+                    avg_delay=("delay_minutes", "mean")
+                ).nlargest(3, "avg_delay").reset_index()
+                
+                for _, row in top_routes.iterrows():
+                    top_routes_list.append({
+                        "route": row["route"],
+                        "count": int(row["count"]),
+                        "avg_delay": round(row["avg_delay"], 1)
+                    })
+            
+            airport_perf.append({
+                "airport": airport_code,
+                "totalFlights": int(total_f),
+                "delayedFlights": int(delays_f),
+                "cancelledFlights": int(cancels_f),
+                "avgDelay": float(avg_d),
+                "delayPct": float(delay_p),
+                "cancelPct": float(cancel_p),
+                "riskLevel": risk,
+                "topRoutes": top_routes_list
+            })
+
     return {
         "kpis": {
             "totalFlights": int(total),
@@ -368,6 +453,7 @@ def get_flight_operations(month=None, origin=None, destination=None, status=None
         "topDelayAirports": top_delay_airports.to_dict("records"),
         "statusDistribution": status_dist.to_dict("records"),
         "routePerformance": route_perf.to_dict("records"),
+        "airportPerformance": airport_perf,
     }
 
 # ─── Financial Intelligence ──────────────────────────────────────────────────
@@ -456,7 +542,7 @@ def get_financial_intelligence(month=None, route=None):
     else:
         insights.append(f"📈 December revenue increased by {rev_change}% compared to November.")
     if total_refunds > 0:
-        insights.append(f"💸 Total refunds: ₹{total_refunds/100000:.1f} Lakh — refunds increased during disruption periods.")
+        insights.append(f"💸 Total refunds: {int(total_refunds):,} — refunds increased during disruption periods.")
     insights.append(f"✈️ Average load factor: {avg_load}% across all routes.")
     if revenue_lost > 0:
         insights.append(f"⚠️ Revenue drop from Nov to Dec: ₹{revenue_lost/10000000:.1f} Cr due to winter flight cancellations.")
@@ -735,6 +821,106 @@ def get_predictive_intelligence():
         "delayForecast": delay_forecast,
         "complianceForecast": compliance_forecast,
         "recommendations": recommendations,
+    }
+
+# ─── Decision Lab (Scenario Simulator) ───────────────────────────────────────
+
+def get_decision_lab():
+    """
+    Computes baseline operational metrics from actual data and returns
+    them for the Decision Lab scenario simulator.
+    """
+    flights = load_flights()
+    revenue_df = load_revenue()
+    duty = load_crew_duty()
+    fdtl = load_fdtl_compliance()
+    penalties = load_dgca_penalties()
+    indigo_penalties = penalties[penalties["airline"] == "IndiGo"]
+
+    total_flights = len(flights)
+    delayed = int((flights["status"] == "DELAYED").sum())
+    cancelled = int((flights["status"] == "CANCELLED").sum())
+    on_time = total_flights - delayed - cancelled
+
+    total_revenue = float(revenue_df["revenue"].sum())
+    total_refunds = float(revenue_df["refunds_issued"].sum())
+    avg_fare = float(revenue_df["avg_fare"].mean()) if not revenue_df.empty else 0
+    avg_load_factor = float(revenue_df["load_factor"].mean()) * 100 if not revenue_df.empty else 0
+    avg_delay = float(flights["delay_minutes"].mean()) if "delay_minutes" in flights.columns else 0
+
+    # Crew metrics
+    total_crew = duty["employee_id"].nunique() if not duty.empty else 0
+    avg_block_hours = float(duty["block_hours"].mean()) if not duty.empty else 0
+    avg_rest_hours = float(duty["rest_hrs_before_duty"].mean()) if not duty.empty else 0
+
+    # FDTL compliance
+    if "compliant" in fdtl.columns:
+        fdtl_yes = len(fdtl[fdtl["compliant"] == "YES"])
+        fdtl_total = len(fdtl)
+        fdtl_rate = safe_pct(fdtl_yes, fdtl_total)
+    elif "fdtl_compliant" in duty.columns:
+        compliant_count = int((duty["fdtl_compliant"] == 1).sum())
+        fdtl_rate = safe_pct(compliant_count, len(duty))
+    else:
+        fdtl_rate = 100.0
+
+    # Penalty metrics
+    total_penalty_count = len(indigo_penalties)
+    total_penalty_amount = float(indigo_penalties["penalty_inr_lakh"].sum()) if not indigo_penalties.empty else 0
+
+    # Revenue by month
+    nov_rev = float(revenue_df[revenue_df["month"] == "Nov"]["revenue"].sum())
+    dec_rev = float(revenue_df[revenue_df["month"] == "Dec"]["revenue"].sum())
+
+    # Route-level breakdown for scenario impact analysis
+    route_metrics = []
+    if not flights.empty:
+        route_groups = flights.groupby("route")
+        rev_by_route = revenue_df.groupby("route")["revenue"].sum().to_dict() if not revenue_df.empty else {}
+        
+        for route, group in route_groups:
+            tf = len(group)
+            dl = int((group["status"] == "DELAYED").sum())
+            cn = int((group["status"] == "CANCELLED").sum())
+            ad = float(group["delay_minutes"].mean()) if "delay_minutes" in group.columns else 0
+            if np.isnan(ad):
+                ad = 0.0
+            rv = rev_by_route.get(route, 0)
+            route_metrics.append({
+                "route": route,
+                "flights": tf,
+                "delayed": dl,
+                "cancelled": cn,
+                "avgDelay": round(ad, 1),
+                "revenue": round(rv, 2),
+                "delayPct": safe_pct(dl, tf),
+                "cancelPct": safe_pct(cn, tf),
+            })
+        route_metrics = sorted(route_metrics, key=lambda x: x["revenue"], reverse=True)[:15]
+
+    return {
+        "baseline": {
+            "totalFlights": int(total_flights),
+            "onTime": int(on_time),
+            "delayed": int(delayed),
+            "cancelled": int(cancelled),
+            "delayPct": safe_pct(delayed, total_flights),
+            "cancelPct": safe_pct(cancelled, total_flights),
+            "avgDelay": round(avg_delay, 1),
+            "totalRevenue": round(total_revenue, 2),
+            "novRevenue": round(nov_rev, 2),
+            "decRevenue": round(dec_rev, 2),
+            "totalRefunds": round(total_refunds, 2),
+            "avgFare": round(avg_fare, 2),
+            "avgLoadFactor": round(avg_load_factor, 1),
+            "totalCrew": int(total_crew),
+            "avgBlockHours": round(avg_block_hours, 1),
+            "avgRestHours": round(avg_rest_hours, 1),
+            "fdtlCompliance": fdtl_rate,
+            "penaltyCount": int(total_penalty_count),
+            "penaltyAmountLakh": round(total_penalty_amount, 2),
+        },
+        "routeMetrics": route_metrics,
     }
 
 # ─── Legacy support ──────────────────────────────────────────────────────────
