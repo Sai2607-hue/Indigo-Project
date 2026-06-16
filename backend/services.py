@@ -4,7 +4,7 @@ import os
 import glob
 from functools import lru_cache
 
-DATA_DIR = r"C:\Users\Sai Niranjan\Desktop\Guvi Final Reports\submission_cleaned-20260613T040246Z-3-001\submission_cleaned"
+DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
 # ─── Data Loading (cached) ───────────────────────────────────────────────────
 
