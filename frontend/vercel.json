@@ -1,4 +1,7 @@
 {
+  "env": {
+    "VITE_API_URL": "https://indigo-backend-pzyd.onrender.com"
+  },
   "rewrites": [
     {
       "source": "/(.*)",
