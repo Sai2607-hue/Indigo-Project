@@ -29,7 +29,6 @@ const PredictiveIntelligence = () => {
     <div className="dashboard-container">
       <div className="dashboard-header">
         <h1>Predictive Intelligence</h1>
-        <p>Revenue forecasting, delay predictions, compliance risk outlook, and actionable recommendations.</p>
       </div>
 
       <div className="chart-grid">

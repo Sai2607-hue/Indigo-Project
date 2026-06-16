@@ -392,7 +392,7 @@ main {
   padding: 18px;
   background: var(--surface-card);
   border-radius: var(--radius-sm);
-  border-left: 4px solid var(--warning);
+  border: 1px solid var(--border-subtle);
   margin-bottom: 12px;
   transition: all 0.2s;
 }
@@ -401,21 +401,14 @@ main {
   background: var(--surface-card-hover);
 }
 
-.recommendation-card.high { border-left-color: var(--danger); }
-.recommendation-card.medium { border-left-color: var(--warning); }
-.recommendation-card.low { border-left-color: var(--success); }
-
 .recommendation-card .rec-priority {
   font-size: 10px;
   font-weight: 700;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 1px;
   margin-bottom: 6px;
 }
-
-.recommendation-card.high .rec-priority { color: var(--danger); }
-.recommendation-card.medium .rec-priority { color: var(--warning); }
-.recommendation-card.low .rec-priority { color: var(--success); }
 
 .recommendation-card .rec-title {
   font-size: 14px;
@@ -660,48 +653,51 @@ main {
 .scenario-slider {
   -webkit-appearance: none;
   appearance: none;
+  width: 100%;
   height: 6px;
   border-radius: 3px;
   outline: none;
+  cursor: pointer;
   transition: opacity 0.15s ease;
 }
 
 .scenario-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
-  background: var(--primary, #001B94);
+  background: var(--indigo-primary, #001B94);
   cursor: pointer;
-  border: 3px solid #ffffff;
-  box-shadow: 0 2px 6px rgba(0, 27, 148, 0.25);
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 27, 148, 0.3);
   transition: all 0.2s ease;
 }
 
 .scenario-slider::-webkit-slider-thumb:hover {
-  transform: scale(1.15);
-  box-shadow: 0 3px 10px rgba(0, 27, 148, 0.35);
+  transform: scale(1.2);
+  box-shadow: 0 2px 8px rgba(0, 27, 148, 0.4);
 }
 
 .scenario-slider::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
-  background: var(--primary, #001B94);
+  background: var(--indigo-primary, #001B94);
   cursor: pointer;
-  border: 3px solid #ffffff;
-  box-shadow: 0 2px 6px rgba(0, 27, 148, 0.25);
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 27, 148, 0.3);
   transition: all 0.2s ease;
 }
 
 .scenario-slider::-moz-range-thumb:hover {
-  transform: scale(1.15);
-  box-shadow: 0 3px 10px rgba(0, 27, 148, 0.35);
+  transform: scale(1.2);
+  box-shadow: 0 2px 8px rgba(0, 27, 148, 0.4);
 }
 
 .scenario-slider::-moz-range-track {
   height: 6px;
   border-radius: 3px;
-  background: rgba(0, 27, 148, 0.1);
+  background: rgba(0, 27, 148, 0.12);
 }
+

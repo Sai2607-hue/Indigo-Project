@@ -44,7 +44,6 @@ const RiskComplianceCenter = () => {
     <div className="dashboard-container">
       <div className="dashboard-header">
         <h1>Risk & Compliance Center</h1>
-        <p>DGCA violations, weather disruptions, competitor incidents, and operational risk assessment.</p>
       </div>
 
       <FilterPanel filters={filters} filterOptions={filterOptions} onFilterChange={handleFilterChange} />

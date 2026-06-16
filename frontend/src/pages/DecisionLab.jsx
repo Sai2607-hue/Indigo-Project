@@ -17,19 +17,23 @@ const PARAMS = [
   { id: 'weatherSeverity', label: 'Weather Severity', unit: 'x', min: 0.5, max: 2.0, step: 0.1, default: 1.0, icon: '🌦️' },
 ];
 
-const PRESETS = [
-  { name: 'Winter Storm', icon: '❄️', values: { weatherSeverity: 1.8, crewChange: -10, delayReduction: 0, cancellationReduction: 0, fareAdjustment: 0, loadFactorChange: -5 } },
-  { name: 'Peak Season', icon: '🔥', values: { weatherSeverity: 1.0, crewChange: 15, delayReduction: 10, cancellationReduction: 10, fareAdjustment: 12, loadFactorChange: 8 } },
-  { name: 'Ops Overhaul', icon: '🛠️', values: { weatherSeverity: 1.0, crewChange: 20, delayReduction: 30, cancellationReduction: 25, fareAdjustment: 0, loadFactorChange: 5 } },
-  { name: 'Cost Cut', icon: '✂️', values: { weatherSeverity: 1.0, crewChange: -15, delayReduction: 0, cancellationReduction: 0, fareAdjustment: -10, loadFactorChange: -3 } },
-];
-
 /* ─── Compact Slider ─────────────────────────────────────────────────────── */
 const Slider = ({ p, value, onChange }) => {
+  const defaultPct = ((p.default - p.min) / (p.max - p.min)) * 100;
   const pct = ((value - p.min) / (p.max - p.min)) * 100;
   const isDefault = value === p.default;
   const displayVal = p.id === 'weatherSeverity' ? value.toFixed(1) : value;
   const sign = value > 0 && p.id !== 'weatherSeverity' ? '+' : '';
+
+  const getSliderBackground = () => {
+    if (pct === defaultPct) {
+      return 'rgba(0, 27, 148, 0.12)';
+    }
+    if (pct > defaultPct) {
+      return `linear-gradient(to right, rgba(0, 27, 148, 0.12) 0%, rgba(0, 27, 148, 0.12) ${defaultPct}%, var(--indigo-primary) ${defaultPct}%, var(--indigo-primary) ${pct}%, rgba(0, 27, 148, 0.12) ${pct}%, rgba(0, 27, 148, 0.12) 100%)`;
+    }
+    return `linear-gradient(to right, rgba(0, 27, 148, 0.12) 0%, rgba(0, 27, 148, 0.12) ${pct}%, var(--indigo-primary) ${pct}%, var(--indigo-primary) ${defaultPct}%, rgba(0, 27, 148, 0.12) ${defaultPct}%, rgba(0, 27, 148, 0.12) 100%)`;
+  };
 
   return (
     <div style={{ flex: '1 1 0', minWidth: '150px' }}>
@@ -45,9 +49,8 @@ const Slider = ({ p, value, onChange }) => {
         onChange={e => onChange(p.id, parseFloat(e.target.value))}
         className="scenario-slider"
         style={{
-          width: '100%', height: '8px', borderRadius: '4px', outline: 'none', cursor: 'pointer',
-          WebkitAppearance: 'none',
-          background: `linear-gradient(to right, var(--indigo-primary) 0%, var(--indigo-primary) ${pct}%, rgba(0,27,148,0.2) ${pct}%, rgba(0,27,148,0.2) 100%)`,
+          width: '100%',
+          background: getSliderBackground(),
         }}
       />
     </div>
@@ -85,7 +88,7 @@ const Tile = ({ label, baseline, projected, format, inverse }) => {
         }}>{better ? '▲' : '▼'} {Math.abs(pct).toFixed(1)}%</span>}
       </div>
       <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.2 }}>{fmt(projected)}</div>
-      <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '3px' }}>was {fmt(baseline)}</div>
+      {!same && <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '3px' }}>was {fmt(baseline)}</div>}
     </div>
   );
 };
@@ -107,7 +110,6 @@ const DecisionLab = () => {
 
   const set = (id, v) => { setParams(p => ({ ...p, [id]: v })); setActivePreset(null); };
   const reset = () => { const d = {}; PARAMS.forEach(p => d[p.id] = p.default); setParams(d); setActivePreset(null); };
-  const preset = p => { setActivePreset(p.name); setParams(prev => ({ ...prev, ...p.values })); };
   const modified = PARAMS.some(p => params[p.id] !== p.default);
 
   /* ─── Projection Engine ────────────────────────────────────────────────── */
@@ -115,6 +117,31 @@ const DecisionLab = () => {
     if (!data) return null;
     const b = data.baseline;
 
+    // If no slider is changed, return exact baseline values
+    if (!PARAMS.some(p => params[p.id] !== p.default)) {
+      return {
+        totalFlights: b.totalFlights,
+        onTime: b.onTime,
+        delayed: b.delayed,
+        cancelled: b.cancelled,
+        delayPct: b.delayPct,
+        cancelPct: b.cancelPct,
+        avgDelay: b.avgDelay,
+        revenue: b.totalRevenue,
+        refunds: b.totalRefunds,
+        loadFactor: b.avgLoadFactor,
+        fdtl: b.fdtlCompliance,
+        penalties: b.penaltyCount,
+        crew: b.totalCrew,
+        health: Math.round(
+          Math.max(0, 100 - b.delayPct * 3) * 0.3 +
+          Math.max(0, 100 - b.cancelPct * 5) * 0.3 +
+          b.fdtlCompliance * 0.4
+        ),
+      };
+    }
+
+    // Sliders have been changed — compute projections
     const wDelay = (params.weatherSeverity - 1) * 15;
     const dReduce = b.delayPct * (params.delayReduction / 100);
     const cEffect = params.crewChange > 0 ? params.crewChange * 0.15 : params.crewChange * 0.25;
@@ -193,11 +220,10 @@ const DecisionLab = () => {
 
   return (
     <div className="dashboard-container">
-      {/* ── Header + Presets ── */}
+      {/* ── Header ── */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
         <div className="dashboard-header" style={{ marginBottom: 0 }}>
           <h1>🧪 Decision Lab</h1>
-          <p>Simulate operational & business scenarios — see projected impact instantly.</p>
         </div>
         <div style={{ display: 'flex', gap: '8px', flexShrink: 0, alignItems: 'center', flexWrap: 'wrap' }}>
           <button onClick={reset} disabled={!modified} style={{
@@ -319,13 +345,14 @@ const DecisionLab = () => {
               </thead>
               <tbody>
                 {data.routeMetrics.slice(0, 10).map((r, i) => {
+                  const isDefault = !modified;
                   const fE = 1 + params.fareAdjustment / 100;
                   const lE = 1 + params.loadFactorChange / Math.max(b.avgLoadFactor, 1);
-                  const pRev = r.revenue * fE * lE;
+                  const pRev = isDefault ? r.revenue : r.revenue * fE * lE;
                   const dRev = pRev - r.revenue;
                   const wI = (params.weatherSeverity - 1) * 15;
                   const cE = params.crewChange > 0 ? params.crewChange * 0.15 : params.crewChange * 0.25;
-                  const pDelay = Math.max(0, Math.min(100, r.delayPct - r.delayPct * (params.delayReduction / 100) + wI - cE));
+                  const pDelay = isDefault ? r.delayPct : Math.max(0, Math.min(100, r.delayPct - r.delayPct * (params.delayReduction / 100) + wI - cE));
 
                   return (
                     <tr key={i} style={{ borderBottom: '1px solid rgba(0,27,148,0.04)' }} className="table-row-hover">
@@ -333,8 +360,8 @@ const DecisionLab = () => {
                       <td style={{ padding: '8px 6px', textAlign: 'right', color: 'var(--text-secondary)' }}>{r.flights}</td>
                       <td style={{ padding: '8px 6px', textAlign: 'right', color: 'var(--text-secondary)' }}>₹{(r.revenue / 1e7).toFixed(2)} Cr</td>
                       <td style={{ padding: '8px 6px', textAlign: 'right', fontWeight: 600 }}>₹{(pRev / 1e7).toFixed(2)} Cr</td>
-                      <td style={{ padding: '8px 6px', textAlign: 'right', fontWeight: 700, color: dRev >= 0 ? 'var(--success)' : 'var(--danger)' }}>
-                        {dRev >= 0 ? '+' : ''}₹{(dRev / 1e7).toFixed(2)} Cr
+                      <td style={{ padding: '8px 6px', textAlign: 'right', fontWeight: 700, color: Math.abs(dRev) < 0.01 ? 'var(--text-muted)' : dRev >= 0 ? 'var(--success)' : 'var(--danger)' }}>
+                        {Math.abs(dRev) < 0.01 ? '—' : `${dRev >= 0 ? '+' : ''}₹${(dRev / 1e7).toFixed(2)} Cr`}
                       </td>
                       <td style={{ padding: '8px 6px', textAlign: 'right' }}>
                         <span className={`health-badge ${pDelay > 20 ? 'red' : pDelay > 10 ? 'yellow' : 'green'}`} style={{ fontSize: '10px', padding: '2px 6px' }}>

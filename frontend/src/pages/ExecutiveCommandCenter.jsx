@@ -51,7 +51,6 @@ const ExecutiveCommandCenter = () => {
     <div className="dashboard-container">
       <div className="dashboard-header">
         <h1>Executive Command Center</h1>
-        <p>What is happening right now? Real-time operational and financial health.</p>
       </div>
 
       <FilterPanel filters={filters} filterOptions={filterOptions} onFilterChange={handleFilterChange} />

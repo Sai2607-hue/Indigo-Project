@@ -44,7 +44,6 @@ const FinancialIntelligence = () => {
     <div className="dashboard-container">
       <div className="dashboard-header">
         <h1>Financial Intelligence</h1>
-        <p>Revenue tracking, route profitability, refund analysis, and financial performance.</p>
       </div>
 
       <FilterPanel filters={filters} filterOptions={filterOptions} onFilterChange={handleFilterChange} />

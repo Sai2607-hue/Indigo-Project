@@ -161,7 +161,6 @@ const FlightOperationsIntelligence = () => {
     <div className="dashboard-container">
       <div className="dashboard-header">
         <h1>Flight Operations Intelligence</h1>
-        <p>Deep dive into flight schedules, delays, cancellations, and route performance.</p>
       </div>
 
       <FilterPanel filters={filters} filterOptions={filterOptions} onFilterChange={handleFilterChange} />

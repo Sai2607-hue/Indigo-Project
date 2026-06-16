@@ -43,7 +43,6 @@ const CrewOptimizationCenter = () => {
     <div className="dashboard-container">
       <div className="dashboard-header">
         <h1>Crew Optimization Center</h1>
-        <p>Crew duty logs, FDTL compliance, fatigue management, and roster optimization.</p>
       </div>
 
       <FilterPanel filters={filters} filterOptions={filterOptions} onFilterChange={handleFilterChange} />
