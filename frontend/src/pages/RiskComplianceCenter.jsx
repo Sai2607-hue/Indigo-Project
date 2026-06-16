@@ -7,7 +7,7 @@ import {
 import FilterPanel from '../components/FilterPanel';
 import InfoIcon from '../components/InfoIcon';
 
-const API = 'http://127.0.0.1:8000';
+const API = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 const COLORS = ['#001B94', '#00B259', '#3349aa', '#33c17a', '#6677bf', '#66d19c', '#4d6eb2'];
 
 const RiskComplianceCenter = () => {

@@ -6,7 +6,7 @@ import {
 import FilterPanel from '../components/FilterPanel';
 import InfoIcon from '../components/InfoIcon';
 
-const API = 'http://127.0.0.1:8000';
+const API = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 const COLORS = { onTime: '#00B259', delayed: '#001B94', cancelled: '#4d6eb2' };
 
 const ExecutiveCommandCenter = () => {

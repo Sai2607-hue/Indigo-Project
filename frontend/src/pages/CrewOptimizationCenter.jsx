@@ -7,7 +7,7 @@ import {
 import FilterPanel from '../components/FilterPanel';
 import InfoIcon from '../components/InfoIcon';
 
-const API = 'http://127.0.0.1:8000';
+const API = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 const COLORS = ['#00B259', '#001B94', '#33c17a', '#3349aa', '#66d19c', '#6677bf'];
 
 const CrewOptimizationCenter = () => {

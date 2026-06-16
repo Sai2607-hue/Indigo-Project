@@ -6,7 +6,7 @@ import {
 } from 'recharts';
 import InfoIcon from '../components/InfoIcon';
 
-const API = 'http://127.0.0.1:8000';
+const API = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 const PARAMS = [
   { id: 'crewChange', label: 'Crew Availability', unit: '%', min: -30, max: 30, step: 1, default: 0, icon: '👥' },

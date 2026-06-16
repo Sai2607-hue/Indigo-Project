@@ -7,7 +7,7 @@ import FilterPanel from '../components/FilterPanel';
 import InfoIcon from '../components/InfoIcon';
 import IndiaMap from '@svg-maps/india';
 
-const API = 'http://127.0.0.1:8000';
+const API = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 const CHART_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899'];
 
 const AIRPORT_NAMES = {
